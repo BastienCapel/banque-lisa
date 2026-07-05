@@ -1,0 +1,111 @@
+{
+  "parameters": [
+    {
+      "key": "startDate",
+      "value": "2026-07-13",
+      "type": "string",
+      "label": "Date de début",
+      "updatedAt": "2026-07-05T09:26:29.223Z"
+    },
+    {
+      "key": "endDate",
+      "value": "2026-08-10",
+      "type": "string",
+      "label": "Date de fin",
+      "updatedAt": "2026-07-05T09:26:29.223Z"
+    },
+    {
+      "key": "initialCapital",
+      "value": "10",
+      "type": "number",
+      "label": "Capital initial",
+      "updatedAt": "2026-07-05T09:26:29.223Z"
+    },
+    {
+      "key": "dailyAllowance",
+      "value": "2.10",
+      "type": "number",
+      "label": "Versement quotidien",
+      "updatedAt": "2026-07-05T09:26:29.223Z"
+    },
+    {
+      "key": "dailyInterestRate",
+      "value": "0.05",
+      "type": "number",
+      "label": "Intérêt quotidien",
+      "updatedAt": "2026-07-05T09:26:29.223Z"
+    },
+    {
+      "key": "finalBonusRate",
+      "value": "0.10",
+      "type": "number",
+      "label": "Bonus final",
+      "updatedAt": "2026-07-05T09:26:29.223Z"
+    },
+    {
+      "key": "maxBudget",
+      "value": "200",
+      "type": "number",
+      "label": "Budget maximal",
+      "updatedAt": "2026-07-05T09:26:29.224Z"
+    },
+    {
+      "key": "currency",
+      "value": "EUR",
+      "type": "string",
+      "label": "Devise",
+      "updatedAt": "2026-07-05T09:26:29.224Z"
+    },
+    {
+      "key": "appName",
+      "value": "Banque de l'été",
+      "type": "string",
+      "label": "Nom de l'application",
+      "updatedAt": "2026-07-05T09:26:29.224Z"
+    }
+  ],
+  "transactions": [
+    {
+      "date": "2026-07-13",
+      "type": "withdrawal",
+      "amount": -5,
+      "label": "glace",
+      "note": "",
+      "status": "deleted",
+      "createdBy": "parent",
+      "id": "tx_1783243710078_76u8",
+      "createdAt": "2026-07-05T09:28:30.078Z",
+      "updatedAt": "2026-07-05T09:29:47.514Z"
+    }
+  ],
+  "scenarios": [],
+  "auditLogs": [
+    {
+      "id": "log_1783243710078",
+      "action": "create_transaction",
+      "entityType": "transaction",
+      "entityId": "tx_1783243710078_76u8",
+      "previousValueJson": "",
+      "newValueJson": "{\"date\":\"2026-07-13\",\"type\":\"withdrawal\",\"amount\":-5,\"label\":\"glace\",\"note\":\"\",\"status\":\"approved\",\"createdBy\":\"parent\",\"id\":\"tx_1783243710078_76u8\",\"createdAt\":\"2026-07-05T09:28:30.078Z\",\"updatedAt\":\"2026-07-05T09:28:30.078Z\"}",
+      "createdAt": "2026-07-05T09:28:30.078Z"
+    },
+    {
+      "id": "log_1783243787514_a",
+      "action": "update_transaction",
+      "entityType": "transaction",
+      "entityId": "tx_1783243710078_76u8",
+      "previousValueJson": "{\"date\":\"2026-07-13\",\"type\":\"withdrawal\",\"amount\":-5,\"label\":\"glace\",\"note\":\"\",\"status\":\"approved\",\"createdBy\":\"parent\",\"id\":\"tx_1783243710078_76u8\",\"createdAt\":\"2026-07-05T09:28:30.078Z\",\"updatedAt\":\"2026-07-05T09:28:30.078Z\"}",
+      "newValueJson": "{\"date\":\"2026-07-13\",\"type\":\"withdrawal\",\"amount\":-5,\"label\":\"glace\",\"note\":\"\",\"status\":\"deleted\",\"createdBy\":\"parent\",\"id\":\"tx_1783243710078_76u8\",\"createdAt\":\"2026-07-05T09:28:30.078Z\",\"updatedAt\":\"2026-07-05T09:29:47.513Z\"}",
+      "createdAt": "2026-07-05T09:29:47.514Z"
+    },
+    {
+      "id": "log_1783243787514_b",
+      "action": "update_transaction",
+      "entityType": "transaction",
+      "entityId": "tx_1783243710078_76u8",
+      "previousValueJson": "{\"date\":\"2026-07-13\",\"type\":\"withdrawal\",\"amount\":-5,\"label\":\"glace\",\"note\":\"\",\"status\":\"deleted\",\"createdBy\":\"parent\",\"id\":\"tx_1783243710078_76u8\",\"createdAt\":\"2026-07-05T09:28:30.078Z\",\"updatedAt\":\"2026-07-05T09:29:47.513Z\"}",
+      "newValueJson": "{\"date\":\"2026-07-13\",\"type\":\"withdrawal\",\"amount\":-5,\"label\":\"glace\",\"note\":\"\",\"status\":\"deleted\",\"createdBy\":\"parent\",\"id\":\"tx_1783243710078_76u8\",\"createdAt\":\"2026-07-05T09:28:30.078Z\",\"updatedAt\":\"2026-07-05T09:29:47.514Z\"}",
+      "createdAt": "2026-07-05T09:29:47.514Z"
+    }
+  ]
+}
