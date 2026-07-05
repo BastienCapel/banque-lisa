@@ -7,16 +7,16 @@ const ADMIN_SESSION_COOKIE = 'admin_session';
  * Verifies if the given token matches the configured APP_PRIVATE_ACCESS_TOKEN
  */
 export function verifyLisaToken(token: string): boolean {
-  const expectedToken = process.env.APP_PRIVATE_ACCESS_TOKEN || 'Lisa2026';
-  return token === expectedToken;
+  const expectedToken = process.env.APP_PRIVATE_ACCESS_TOKEN;
+  return !!expectedToken && token === expectedToken;
 }
 
 /**
  * Verifies if the given PIN matches the configured APP_PARENT_PIN or APP_PARENT_PASSWORD
  */
 export function verifyAdminPin(pin: string): boolean {
-  const expectedPin = process.env.APP_PARENT_PIN || process.env.APP_PARENT_PASSWORD || '1234';
-  return pin === expectedPin;
+  const expectedPin = process.env.APP_PARENT_PIN || process.env.APP_PARENT_PASSWORD;
+  return !!expectedPin && pin === expectedPin;
 }
 
 /**
@@ -49,7 +49,7 @@ export async function setLisaSession(token: string) {
   cookieStore.set(LISA_SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 60, // 60 days
     path: '/',
   });
@@ -63,7 +63,7 @@ export async function setAdminSession(pin: string) {
   cookieStore.set(ADMIN_SESSION_COOKIE, pin, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     maxAge: 60 * 60 * 24, // 1 day
     path: '/',
   });

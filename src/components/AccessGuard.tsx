@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { KeyRound, Lock, Loader2, Sparkles } from 'lucide-react';
 
@@ -16,6 +16,7 @@ export default function AccessGuard({ children }: AccessGuardProps) {
   
   const searchParams = useSearchParams();
   const router = useRouter();
+  const autoLoginAttempted = useRef<boolean>(false);
 
   const checkAuth = async () => {
     try {
@@ -27,15 +28,19 @@ export default function AccessGuard({ children }: AccessGuardProps) {
     }
   };
 
-  // 1. Check if authenticated on mount
+  // 1. Check if authenticated on mount (only if no token parameter is present)
   useEffect(() => {
-    checkAuth();
-  }, []);
+    const tokenParam = searchParams.get('token');
+    if (!tokenParam && isAuthenticated === null) {
+      checkAuth();
+    }
+  }, [searchParams, isAuthenticated]);
 
   // 2. Intercept query parameters (e.g. ?token=Lisa2026)
   useEffect(() => {
     const tokenParam = searchParams.get('token');
-    if (tokenParam) {
+    if (tokenParam && !autoLoginAttempted.current) {
+      autoLoginAttempted.current = true;
       const autoLogin = async () => {
         setLoading(true);
         try {
@@ -46,14 +51,17 @@ export default function AccessGuard({ children }: AccessGuardProps) {
           });
           if (res.ok) {
             setIsAuthenticated(true);
-            // Remove token from URL for clean address bar
-            router.replace(window.location.pathname);
-            router.refresh();
+            // Remove token from URL silently without triggering Next.js routing transitions
+            if (typeof window !== 'undefined') {
+              window.history.replaceState({}, '', window.location.pathname);
+            }
           } else {
             setError("Le jeton d'accès dans le lien est incorrect.");
+            setIsAuthenticated(false);
           }
         } catch (err) {
           setError("Erreur de connexion.");
+          setIsAuthenticated(false);
         } finally {
           setLoading(false);
         }
@@ -130,7 +138,7 @@ export default function AccessGuard({ children }: AccessGuardProps) {
                 </div>
                 <input
                   type="password"
-                  placeholder="Ex: Lisa2026"
+                  placeholder="••••••••"
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
                   className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 pl-10 pr-3 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
