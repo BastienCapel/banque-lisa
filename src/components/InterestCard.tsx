@@ -42,13 +42,13 @@ export default function InterestCard({
         </div>
       </div>
 
-      <div className="mt-5 flex items-start gap-3 rounded-2xl bg-gradient-to-br from-violet-50/70 to-fuchsia-50/40 p-4 border border-violet-50/50 dark:from-zinc-850 dark:to-zinc-850/50 dark:border-zinc-800">
+      <div className="mt-5 flex items-start gap-3 rounded-2xl bg-gradient-to-br from-violet-50/70 to-fuchsia-50/40 p-4 border border-violet-50/50 dark:from-zinc-950/60 dark:to-zinc-950/30 dark:border-zinc-800/80">
         <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-amber-500 animate-pulse" />
         <div>
           <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
             Le mot du jour
           </h4>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
             {pedagogicalMessage}
           </p>
         </div>

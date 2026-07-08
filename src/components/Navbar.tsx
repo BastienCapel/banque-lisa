@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { PiggyBank, Calendar, Wallet, BarChart2, Shield, LogOut } from 'lucide-react';
+import { PiggyBank, Calendar, Wallet, BarChart2, Shield, LogOut, BookOpen } from 'lucide-react';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -14,11 +14,13 @@ export default function Navbar() {
     { name: 'Évolution', href: '/evolution', icon: Calendar },
     { name: 'Retraits', href: '/retraits', icon: Wallet },
     { name: 'Simulations', href: '/simulations', icon: BarChart2 },
+    { name: 'Comprendre', href: '/comprendre', icon: BookOpen },
   ];
 
   const handleLogout = async () => {
     await fetch('/api/auth', {
       method: 'POST',
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'logout' }),
     });

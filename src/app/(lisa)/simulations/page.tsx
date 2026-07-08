@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { FinancialParams } from '@/types';
 import ScenarioSimulator from '@/components/ScenarioSimulator';
 import { BarChart2, Loader2, Sparkles } from 'lucide-react';
+import { fetchJson, isAuthRequiredError } from '@/lib/api-client';
 
 export default function SimulationsPage() {
   const [params, setParams] = useState<FinancialParams | null>(null);
@@ -12,17 +13,20 @@ export default function SimulationsPage() {
 
   useEffect(() => {
     const fetchParams = async () => {
+      let authRequired = false;
       try {
-        const res = await fetch('/api/settings');
-        if (!res.ok) {
-          throw new Error('Impossible de charger les paramètres financiers.');
-        }
-        const data = await res.json();
+        const data = await fetchJson<FinancialParams>('/api/settings');
         setParams(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        if (isAuthRequiredError(err)) {
+          authRequired = true;
+          return;
+        }
+        setError(err instanceof Error ? err.message : 'Erreur de communication avec le serveur.');
       } finally {
-        setLoading(false);
+        if (!authRequired) {
+          setLoading(false);
+        }
       }
     };
 

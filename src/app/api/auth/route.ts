@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import {
   verifyAdminPin,
   verifyLisaToken,
@@ -8,12 +7,32 @@ import {
   isAdminAuthenticated,
   isLisaAuthenticated,
 } from '@/lib/auth';
+import { jsonNoStore } from '@/lib/api-response';
 
-export async function GET() {
-  return NextResponse.json({
-    lisa: await isLisaAuthenticated(),
-    admin: await isAdminAuthenticated(),
-  });
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Erreur interne du serveur.';
+}
+
+export async function GET(request: Request) {
+  const lisa = await isLisaAuthenticated();
+  const admin = await isAdminAuthenticated();
+  const url = new URL(request.url);
+
+  if (url.searchParams.get('shareLink') === 'true') {
+    if (!admin) {
+      return jsonNoStore({ error: 'Non autorisé. Accès administrateur requis.' }, { status: 403 });
+    }
+
+    const shareUrl = new URL('/', request.url);
+    const token = process.env.APP_PRIVATE_ACCESS_TOKEN;
+    if (token) {
+      shareUrl.searchParams.set('token', token);
+    }
+
+    return jsonNoStore({ shareUrl: shareUrl.toString() });
+  }
+
+  return jsonNoStore({ lisa, admin });
 }
 
 export async function POST(request: Request) {
@@ -23,27 +42,27 @@ export async function POST(request: Request) {
 
     if (action === 'logout') {
       await clearSessions();
-      return NextResponse.json({ success: true });
+      return jsonNoStore({ success: true });
     }
 
     if (pin !== undefined) {
       if (verifyAdminPin(pin)) {
         await setAdminSession(pin);
-        return NextResponse.json({ success: true, role: 'admin' });
+        return jsonNoStore({ success: true, role: 'admin' });
       }
-      return NextResponse.json({ success: false, error: 'Code PIN incorrect.' }, { status: 401 });
+      return jsonNoStore({ success: false, error: 'Code PIN incorrect.' }, { status: 401 });
     }
 
     if (token !== undefined) {
       if (verifyLisaToken(token)) {
         await setLisaSession(token);
-        return NextResponse.json({ success: true, role: 'lisa' });
+        return jsonNoStore({ success: true, role: 'lisa' });
       }
-      return NextResponse.json({ success: false, error: "Lien d'accès ou jeton invalide." }, { status: 401 });
+      return jsonNoStore({ success: false, error: "Lien d'accès ou jeton invalide." }, { status: 401 });
     }
 
-    return NextResponse.json({ success: false, error: 'Requête invalide.' }, { status: 400 });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return jsonNoStore({ success: false, error: 'Requête invalide.' }, { status: 400 });
+  } catch (error) {
+    return jsonNoStore({ success: false, error: getErrorMessage(error) }, { status: 500 });
   }
 }

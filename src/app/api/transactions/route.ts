@@ -1,18 +1,18 @@
-import { NextResponse } from 'next/server';
 import { getTransactions, addTransaction, getFinancialParams } from '@/lib/sheets';
 import { isAdminAuthenticated, isLisaAuthenticated } from '@/lib/auth';
 import { validateWithdrawal } from '@/lib/finance';
+import { jsonNoStore } from '@/lib/api-response';
 
 export async function GET() {
   if (process.env.APP_PRIVATE_ACCESS_TOKEN && !(await isLisaAuthenticated()) && !(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
+    return jsonNoStore({ error: 'Non autorisé.' }, { status: 401 });
   }
 
   try {
     const transactions = await getTransactions();
-    return NextResponse.json(transactions);
+    return jsonNoStore(transactions);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonNoStore({ error: error.message }, { status: 500 });
   }
 }
 
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   const isLisa = await isLisaAuthenticated();
 
   if (!isAdmin && !isLisa) {
-    return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
+    return jsonNoStore({ error: 'Non autorisé.' }, { status: 401 });
   }
 
   try {
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     // Server-side validation of general fields
     if (!date || !type || amount === undefined || !label) {
-      return NextResponse.json({ error: 'Champs obligatoires manquants.' }, { status: 400 });
+      return jsonNoStore({ error: 'Champs obligatoires manquants.' }, { status: 400 });
     }
 
     const params = await getFinancialParams();
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       // Validate withdrawal limit
       const validation = validateWithdrawal(params, existingTransactions, date, Math.abs(amount));
       if (!validation.valid) {
-        return NextResponse.json({ error: validation.error }, { status: 400 });
+        return jsonNoStore({ error: validation.error }, { status: 400 });
       }
 
       // Withdrawals are stored as negative amounts in Sheets
@@ -61,13 +61,13 @@ export async function POST(request: Request) {
         createdBy,
       });
 
-      return NextResponse.json({ success: true, transaction: tx });
+      return jsonNoStore({ success: true, transaction: tx });
     }
 
     if (type === 'adjustment') {
       // Only admin can add adjustments
       if (!isAdmin) {
-        return NextResponse.json({ error: 'Action interdite pour Lisa.' }, { status: 403 });
+        return jsonNoStore({ error: 'Action interdite pour Lisa.' }, { status: 403 });
       }
 
       const tx = await addTransaction({
@@ -80,11 +80,11 @@ export async function POST(request: Request) {
         createdBy: 'parent',
       });
 
-      return NextResponse.json({ success: true, transaction: tx });
+      return jsonNoStore({ success: true, transaction: tx });
     }
 
-    return NextResponse.json({ error: 'Type de transaction non supporté.' }, { status: 400 });
+    return jsonNoStore({ error: 'Type de transaction non supporté.' }, { status: 400 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonNoStore({ error: error.message }, { status: 500 });
   }
 }

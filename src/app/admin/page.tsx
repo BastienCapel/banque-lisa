@@ -20,6 +20,7 @@ import {
   X,
   Edit2,
   Calendar,
+  Copy,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -35,6 +36,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lisaAccessLink, setLisaAccessLink] = useState<string>('');
+  const [accessLinkCopied, setAccessLinkCopied] = useState<boolean>(false);
 
   // Form states for settings
   const [startDate, setStartDate] = useState('');
@@ -62,7 +65,7 @@ export default function AdminPage() {
 
   const checkAdminAuth = async () => {
     try {
-      const res = await fetch('/api/auth');
+      const res = await fetch('/api/auth', { cache: 'no-store' });
       const data = await res.json();
       setIsAdmin(data.admin);
       if (data.admin) {
@@ -80,9 +83,9 @@ export default function AdminPage() {
     setLoading(true);
     try {
       const [paramsRes, txRes, logsRes] = await Promise.all([
-        fetch('/api/settings'),
-        fetch('/api/transactions'),
-        fetch('/api/settings?logs=true'),
+        fetch('/api/settings', { cache: 'no-store' }),
+        fetch('/api/transactions', { cache: 'no-store' }),
+        fetch('/api/settings?logs=true', { cache: 'no-store' }),
       ]);
 
       if (!paramsRes.ok || !txRes.ok || !logsRes.ok) {
@@ -108,6 +111,12 @@ export default function AdminPage() {
       setAppName(paramsData.appName);
 
       setNewTxDate(paramsData.startDate);
+
+      const linkRes = await fetch('/api/auth?shareLink=true', { cache: 'no-store' });
+      if (linkRes.ok) {
+        const linkData = await linkRes.json();
+        setLisaAccessLink(linkData.shareUrl || '');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -127,6 +136,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: pinInput }),
       });
@@ -166,6 +176,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedParams),
       });
@@ -195,6 +206,7 @@ export default function AdminPage() {
 
       const res = await fetch(`/api/transactions/${id}`, {
         method,
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body,
       });
@@ -223,6 +235,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/transactions', {
         method: 'POST',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date: newTxDate,
@@ -266,6 +279,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/transactions/${id}`, {
         method: 'PUT',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: finalAmount,
@@ -292,10 +306,18 @@ export default function AdminPage() {
   const handleLogout = async () => {
     await fetch('/api/auth', {
       method: 'POST',
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'logout' }),
     });
     setIsAdmin(false);
+  };
+
+  const handleCopyLisaAccessLink = async () => {
+    if (!lisaAccessLink) return;
+    await navigator.clipboard.writeText(lisaAccessLink);
+    setAccessLinkCopied(true);
+    window.setTimeout(() => setAccessLinkCopied(false), 2000);
   };
 
   if (loading) {
@@ -455,6 +477,27 @@ export default function AdminPage() {
           </div>
         )}
 
+        {lisaAccessLink && (
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-4 rounded-3xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[10px] uppercase font-bold text-zinc-400 flex items-center gap-1.5">
+                <KeyRound className="h-3.5 w-3.5 text-purple-500" />
+                Lien privé Lisa
+              </span>
+              <p className="mt-1 text-[11px] font-mono text-zinc-500 dark:text-zinc-400 truncate select-all">
+                {lisaAccessLink}
+              </p>
+            </div>
+            <button
+              onClick={handleCopyLisaAccessLink}
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-purple-600 px-3 py-2 text-xs font-bold text-white hover:bg-purple-700 transition cursor-pointer"
+            >
+              {accessLinkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {accessLinkCopied ? 'Copié' : 'Copier'}
+            </button>
+          </div>
+        )}
+
         {/* Dashboard Cards Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Proj. balance card */}
@@ -542,21 +585,21 @@ export default function AdminPage() {
                               type="date"
                               value={editDate}
                               onChange={(e) => setEditDate(e.target.value)}
-                              className="text-xs rounded-lg border border-zinc-200 p-2 w-full dark:bg-zinc-800 text-zinc-850 dark:text-white"
+                              className="text-xs rounded-lg border border-zinc-200 p-2 w-full dark:bg-zinc-800 text-zinc-800 dark:text-white"
                             />
                             <input
                               type="number"
                               value={editAmount}
                               onChange={(e) => setEditAmount(e.target.value)}
                               placeholder="Montant (€)"
-                              className="text-xs rounded-lg border border-zinc-200 p-2 w-full dark:bg-zinc-800 text-zinc-850 dark:text-white"
+                              className="text-xs rounded-lg border border-zinc-200 p-2 w-full dark:bg-zinc-800 text-zinc-800 dark:text-white"
                             />
                             <input
                               type="text"
                               value={editLabel}
                               onChange={(e) => setEditLabel(e.target.value)}
                               placeholder="Libellé"
-                              className="text-xs rounded-lg border border-zinc-200 p-2 w-full dark:bg-zinc-800 text-zinc-850 dark:text-white"
+                              className="text-xs rounded-lg border border-zinc-200 p-2 w-full dark:bg-zinc-800 text-zinc-800 dark:text-white"
                             />
                           </div>
                           <input
@@ -564,7 +607,7 @@ export default function AdminPage() {
                             value={editNote}
                             onChange={(e) => setEditNote(e.target.value)}
                             placeholder="Note ou raison"
-                            className="text-xs rounded-lg border border-zinc-200 p-2 w-full dark:bg-zinc-800 text-zinc-850 dark:text-white"
+                            className="text-xs rounded-lg border border-zinc-200 p-2 w-full dark:bg-zinc-800 text-zinc-800 dark:text-white"
                           />
                           <div className="flex justify-end gap-2">
                             <button
@@ -658,7 +701,7 @@ export default function AdminPage() {
               
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800 text-xs">
-                  <thead className="bg-zinc-50 dark:bg-zinc-850">
+                  <thead className="bg-zinc-50 dark:bg-zinc-800">
                     <tr>
                       <th className="px-3 py-2 text-left font-bold text-zinc-500 uppercase">Date</th>
                       <th className="px-3 py-2 text-left font-bold text-zinc-500 uppercase">Type</th>
@@ -674,7 +717,7 @@ export default function AdminPage() {
                       </tr>
                     ) : (
                       otherApprovedTransactions.map((tx) => (
-                        <tr key={tx.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-850/50">
+                        <tr key={tx.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                           <td className="px-3 py-2.5 font-medium">{formatDate(tx.date)}</td>
                           <td className="px-3 py-2.5">
                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
@@ -720,7 +763,7 @@ export default function AdminPage() {
                   {auditLogs.map((log) => (
                     <div
                       key={log.id}
-                      className="bg-zinc-50 dark:bg-zinc-850 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 text-[10px] leading-normal"
+                      className="bg-zinc-50 dark:bg-zinc-800 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800 text-[10px] leading-normal"
                     >
                       <div className="flex justify-between items-center text-zinc-400 mb-1">
                         <span className="font-bold uppercase text-indigo-600 dark:text-indigo-400">

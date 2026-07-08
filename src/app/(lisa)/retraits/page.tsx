@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { FinancialParams, Transaction } from '@/types';
 import WithdrawalForm from '@/components/WithdrawalForm';
 import { Wallet, Loader2, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { fetchJson, isAuthRequiredError } from '@/lib/api-client';
 
 export default function RetraitsPage() {
   const [params, setParams] = useState<FinancialParams | null>(null);
@@ -12,25 +13,25 @@ export default function RetraitsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
+    let authRequired = false;
     try {
-      const [paramsRes, txRes] = await Promise.all([
-        fetch('/api/settings'),
-        fetch('/api/transactions'),
+      const [paramsData, txData] = await Promise.all([
+        fetchJson<FinancialParams>('/api/settings'),
+        fetchJson<Transaction[]>('/api/transactions'),
       ]);
-
-      if (!paramsRes.ok || !txRes.ok) {
-        throw new Error('Erreur de communication avec le serveur lors du chargement.');
-      }
-
-      const paramsData = await paramsRes.json();
-      const txData = await txRes.json();
 
       setParams(paramsData);
       setTransactions(txData);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      if (isAuthRequiredError(err)) {
+        authRequired = true;
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Erreur de communication avec le serveur.');
     } finally {
-      setLoading(false);
+      if (!authRequired) {
+        setLoading(false);
+      }
     }
   };
 

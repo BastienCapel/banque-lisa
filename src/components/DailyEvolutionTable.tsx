@@ -152,7 +152,7 @@ export default function DailyEvolutionTable({
       <div className="hidden md:block overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
-            <thead className="bg-zinc-50 dark:bg-zinc-850">
+            <thead className="bg-zinc-50 dark:bg-zinc-800">
               <tr>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Jour

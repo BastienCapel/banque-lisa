@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { KeyRound, Lock, Loader2, Sparkles } from 'lucide-react';
+import { AUTH_REQUIRED_EVENT } from '@/lib/api-client';
 
 interface AccessGuardProps {
   children: React.ReactNode;
@@ -20,13 +21,29 @@ export default function AccessGuard({ children }: AccessGuardProps) {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch('/api/auth');
+      const res = await fetch('/api/auth', { cache: 'no-store' });
+      if (!res.ok) {
+        setIsAuthenticated(false);
+        return;
+      }
       const data = await res.json();
       setIsAuthenticated(data.lisa || data.admin);
-    } catch (err) {
+    } catch {
       setIsAuthenticated(false);
     }
   };
+
+  useEffect(() => {
+    const handleAuthRequired = (event: Event) => {
+      const customEvent = event as CustomEvent<{ message?: string }>;
+      setError(customEvent.detail?.message || "Session expirée. Ouvre le lien privé ou saisis le jeton d'accès.");
+      setIsAuthenticated(false);
+      setLoading(false);
+    };
+
+    window.addEventListener(AUTH_REQUIRED_EVENT, handleAuthRequired);
+    return () => window.removeEventListener(AUTH_REQUIRED_EVENT, handleAuthRequired);
+  }, []);
 
   // 1. Check if authenticated on mount (only if no token parameter is present)
   useEffect(() => {
@@ -46,11 +63,13 @@ export default function AccessGuard({ children }: AccessGuardProps) {
         try {
           const res = await fetch('/api/auth', {
             method: 'POST',
+            cache: 'no-store',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: tokenParam }),
           });
           if (res.ok) {
             setIsAuthenticated(true);
+            setError(null);
             // Remove token from URL silently without triggering Next.js routing transitions
             if (typeof window !== 'undefined') {
               window.history.replaceState({}, '', window.location.pathname);
@@ -59,7 +78,7 @@ export default function AccessGuard({ children }: AccessGuardProps) {
             setError("Le jeton d'accès dans le lien est incorrect.");
             setIsAuthenticated(false);
           }
-        } catch (err) {
+        } catch {
           setError("Erreur de connexion.");
           setIsAuthenticated(false);
         } finally {
@@ -78,6 +97,7 @@ export default function AccessGuard({ children }: AccessGuardProps) {
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: tokenInput }),
       });
@@ -88,9 +108,10 @@ export default function AccessGuard({ children }: AccessGuardProps) {
       }
 
       setIsAuthenticated(true);
+      setError(null);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur de connexion.");
     } finally {
       setLoading(false);
     }

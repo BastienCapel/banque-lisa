@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { FinancialParams, Transaction } from '@/types';
-import { calculateDailyEvolution, diffDays } from '@/lib/finance';
+import { calculateDailyEvolution, diffDays, getTodayStr } from '@/lib/finance';
 import BalanceCard from '@/components/BalanceCard';
 import InterestCard from '@/components/InterestCard';
 import ProjectionCard from '@/components/ProjectionCard';
 import { Sparkles, Calendar, TrendingUp, Info, HelpCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { fetchJson, isAuthRequiredError } from '@/lib/api-client';
 
 export default function LisaDashboard() {
   const [params, setParams] = useState<FinancialParams | null>(null);
@@ -16,25 +17,25 @@ export default function LisaDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
+    let authRequired = false;
     try {
-      const [paramsRes, txRes] = await Promise.all([
-        fetch('/api/settings'),
-        fetch('/api/transactions'),
+      const [paramsData, txData] = await Promise.all([
+        fetchJson<FinancialParams>('/api/settings'),
+        fetchJson<Transaction[]>('/api/transactions'),
       ]);
-
-      if (!paramsRes.ok || !txRes.ok) {
-        throw new Error("Impossible de charger les données financières depuis l'API.");
-      }
-
-      const paramsData = await paramsRes.json();
-      const txData = await txRes.json();
 
       setParams(paramsData);
       setTransactions(txData);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      if (isAuthRequiredError(err)) {
+        authRequired = true;
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Erreur de communication avec le serveur.');
     } finally {
-      setLoading(false);
+      if (!authRequired) {
+        setLoading(false);
+      }
     }
   };
 
@@ -64,7 +65,7 @@ export default function LisaDashboard() {
   const totalDays = diffDays(params.startDate, params.endDate) + 1;
 
   // Find today's date index in the evolution array
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayStr();
   
   // Find current day based on today's date (or last day if period ended, first day if not started)
   let currentDayRow = evolution.find(row => row.date === todayStr);
@@ -88,9 +89,7 @@ export default function LisaDashboard() {
   const totalWithdrawn = approvedWithdrawals.reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
   // Calculate days remaining
-  const today = new Date(todayStr + 'T00:00:00');
-  const endDate = new Date(params.endDate + 'T00:00:00');
-  const daysRemaining = Math.max(0, Math.round((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+  const daysRemaining = Math.max(0, diffDays(todayStr, params.endDate));
 
   // Generate pedagogical message of the day
   const getPedagogicalMessage = (): string => {
@@ -173,12 +172,6 @@ export default function LisaDashboard() {
               <span className="text-zinc-500 dark:text-zinc-400">Nombre de jours dans la période :</span>
               <span className="font-bold text-zinc-900 dark:text-white">
                 {totalDays} jours
-              </span>
-            </div>
-            <div className="flex justify-between py-2.5">
-              <span className="text-zinc-500 dark:text-zinc-400">Lien d'accès de Lisa :</span>
-              <span className="text-[10px] text-zinc-400 font-mono select-all">
-                {typeof window !== 'undefined' ? `${window.location.origin}/?token=${params.currency === 'EUR' ? 'Lisa2026' : ''}` : ''}
               </span>
             </div>
           </div>

@@ -1,23 +1,23 @@
-import { NextResponse } from 'next/server';
 import { getScenarios, addScenario, deleteScenario } from '@/lib/sheets';
 import { isAdminAuthenticated, isLisaAuthenticated } from '@/lib/auth';
+import { jsonNoStore } from '@/lib/api-response';
 
 export async function GET() {
   if (process.env.APP_PRIVATE_ACCESS_TOKEN && !(await isLisaAuthenticated()) && !(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
+    return jsonNoStore({ error: 'Non autorisé.' }, { status: 401 });
   }
 
   try {
     const scenarios = await getScenarios();
-    return NextResponse.json(scenarios);
+    return jsonNoStore(scenarios);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonNoStore({ error: error.message }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   if (process.env.APP_PRIVATE_ACCESS_TOKEN && !(await isLisaAuthenticated()) && !(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
+    return jsonNoStore({ error: 'Non autorisé.' }, { status: 401 });
   }
 
   try {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const { name, description, withdrawalsJson, resultFinalBalance, resultInterestLost } = body;
 
     if (!name || !withdrawalsJson) {
-      return NextResponse.json({ error: 'Nom et liste des retraits requis.' }, { status: 400 });
+      return jsonNoStore({ error: 'Nom et liste des retraits requis.' }, { status: 400 });
     }
 
     const scenario = await addScenario({
@@ -36,15 +36,15 @@ export async function POST(request: Request) {
       resultInterestLost: parseFloat(resultInterestLost || '0'),
     });
 
-    return NextResponse.json({ success: true, scenario });
+    return jsonNoStore({ success: true, scenario });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonNoStore({ error: error.message }, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   if (process.env.APP_PRIVATE_ACCESS_TOKEN && !(await isLisaAuthenticated()) && !(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 });
+    return jsonNoStore({ error: 'Non autorisé.' }, { status: 401 });
   }
 
   try {
@@ -52,12 +52,12 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'ID du scénario manquant.' }, { status: 400 });
+      return jsonNoStore({ error: 'ID du scénario manquant.' }, { status: 400 });
     }
 
     await deleteScenario(id);
-    return NextResponse.json({ success: true });
+    return jsonNoStore({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonNoStore({ error: error.message }, { status: 500 });
   }
 }

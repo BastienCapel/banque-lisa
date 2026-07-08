@@ -1,22 +1,27 @@
-import { NextResponse } from 'next/server';
 import { updateTransaction } from '@/lib/sheets';
 import { isAdminAuthenticated } from '@/lib/auth';
+import { jsonNoStore } from '@/lib/api-response';
+import { Transaction } from '@/types';
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Erreur interne du serveur.';
+}
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAdminAuthenticated()) {
-    return NextResponse.json({ error: 'Non autorisé. Accès administrateur requis.' }, { status: 403 });
+  if (!(await isAdminAuthenticated())) {
+    return jsonNoStore({ error: 'Non autorisé. Accès administrateur requis.' }, { status: 403 });
   }
 
   const { id } = await params;
 
   try {
-    const body = await request.json();
+    const body = (await request.json()) as Partial<Transaction>;
     const { status, amount, label, note, date } = body;
 
-    const updates: any = {};
+    const updates: Partial<Transaction> = {};
     if (status !== undefined) updates.status = status;
     if (amount !== undefined) updates.amount = amount;
     if (label !== undefined) updates.label = label;
@@ -24,9 +29,9 @@ export async function PUT(
     if (date !== undefined) updates.date = date;
 
     const updatedTx = await updateTransaction(id, updates);
-    return NextResponse.json({ success: true, transaction: updatedTx });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonNoStore({ success: true, transaction: updatedTx });
+  } catch (error) {
+    return jsonNoStore({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -34,8 +39,8 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAdminAuthenticated()) {
-    return NextResponse.json({ error: 'Non autorisé. Accès administrateur requis.' }, { status: 403 });
+  if (!(await isAdminAuthenticated())) {
+    return jsonNoStore({ error: 'Non autorisé. Accès administrateur requis.' }, { status: 403 });
   }
 
   const { id } = await params;
@@ -44,8 +49,8 @@ export async function DELETE(
     // We mark the transaction as deleted in status instead of physical row deletion,
     // which maintains consistency in Google Sheets and satisfies AuditLog.
     const updatedTx = await updateTransaction(id, { status: 'deleted' });
-    return NextResponse.json({ success: true, transaction: updatedTx });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonNoStore({ success: true, transaction: updatedTx });
+  } catch (error) {
+    return jsonNoStore({ error: getErrorMessage(error) }, { status: 500 });
   }
 }
