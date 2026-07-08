@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FinancialParams, SimulatedWithdrawal, SimulationResult } from '../types';
-import { calculateScenario, getDatesInRange, addDays } from '@/lib/finance';
+import { calculateScenario, getDatesInRange, addDays, getTodayStr } from '@/lib/finance';
 import { Plus, Trash2, LineChart as ChartIcon, RefreshCw, BarChart2, Info } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -68,7 +68,7 @@ export default function ScenarioSimulator({ params }: ScenarioSimulatorProps) {
       }
       case 'today_10': {
         // Withdraw 10 € today or on day 1
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayStr();
         const date = (today >= params.startDate && today <= params.endDate) ? today : params.startDate;
         return [{
           date,

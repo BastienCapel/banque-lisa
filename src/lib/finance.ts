@@ -10,17 +10,32 @@ import {
  * Adds a specific number of days to a date string (YYYY-MM-DD)
  */
 export function addDays(dateStr: string, days: number): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  date.setDate(date.getDate() + days);
+  // Tout en UTC : un parsing en heure locale combiné à toISOString() (UTC)
+  // fait reculer la date d'un jour pour tout visiteur en fuseau UTC+ (ex. France),
+  // ce qui rendait getDatesInRange infinie.
+  const date = new Date(dateStr + 'T00:00:00Z');
+  date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().split('T')[0];
+}
+
+/**
+ * Returns today's date (YYYY-MM-DD) in the visitor's local timezone.
+ * new Date().toISOString() renverrait la date UTC, donc la veille entre
+ * minuit et ~2h du matin en France.
+ */
+export function getTodayStr(): string {
+  const d = new Date();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
 }
 
 /**
  * Calculates the difference in days between two date strings (inclusive/exclusive depending on usage)
  */
 export function diffDays(startDateStr: string, endDateStr: string): number {
-  const start = new Date(startDateStr + 'T00:00:00');
-  const end = new Date(endDateStr + 'T00:00:00');
+  const start = new Date(startDateStr + 'T00:00:00Z');
+  const end = new Date(endDateStr + 'T00:00:00Z');
   const diffTime = end.getTime() - start.getTime();
   return Math.round(diffTime / (1000 * 60 * 60 * 24));
 }

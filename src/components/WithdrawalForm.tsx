@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { FinancialParams, Transaction } from '../types';
-import { calculateScenario, getAvailableBalanceAtDate } from '@/lib/finance';
+import { calculateScenario, getAvailableBalanceAtDate, getTodayStr } from '@/lib/finance';
 import { AlertCircle, ArrowRight, CheckCircle2, Loader2, Wallet } from 'lucide-react';
+import { fetchJson, isAuthRequiredError } from '@/lib/api-client';
 
 interface WithdrawalFormProps {
   params: FinancialParams;
@@ -31,7 +32,7 @@ export default function WithdrawalForm({
 
   // Set default date to today, clamped to period
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayStr();
     if (today >= params.startDate && today <= params.endDate) {
       setDate(today);
     } else {
@@ -95,7 +96,7 @@ export default function WithdrawalForm({
     setLoading(true);
 
     try {
-      const res = await fetch('/api/transactions', {
+      await fetchJson('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -107,17 +108,15 @@ export default function WithdrawalForm({
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Une erreur est survenue lors de la demande.');
-      }
-
       setSuccessMsg(`Demande de retrait de ${amount} € enregistrée ! En attente de validation par le parent.`);
       setAmountInput('');
       setNote('');
       onSuccess();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      if (isAuthRequiredError(err)) {
+        return;
+      }
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la demande.');
     } finally {
       setLoading(false);
     }
@@ -205,6 +204,7 @@ export default function WithdrawalForm({
           >
             <option value="glace">🍧 Glace</option>
             <option value="sortie">🎬 Sortie / Cinéma</option>
+            <option value="restaurant">🍕 Restaurant</option>
             <option value="shopping">🛍️ Shopping</option>
             <option value="cadeau">🎁 Cadeau</option>
             <option value="autre">❓ Autre</option>
